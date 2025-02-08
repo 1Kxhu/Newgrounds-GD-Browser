@@ -298,7 +298,7 @@ namespace htmlHelper
 
 			if (response.status_code != 200) {
 				log::error("Request failed with status: {}", response.status_code);
-				htmlHelper::responseText = "-1";
+				htmlHelper::responseText = "~" + response.status_code;
 				return;
 			}
 
@@ -315,9 +315,17 @@ namespace htmlHelper
 				std::this_thread::sleep_for(std::chrono::milliseconds(16)); // temp 60 fps rahh
 			}
 
-			if (htmlHelper::responseText == "-1")
+			if (htmlHelper::responseText.starts_with("~"))
 			{
-				// todo
+				std::string errorString = "Error " + htmlHelper::responseText.substr(1);
+				const char* errorCString = errorString.c_str();
+
+				FLAlertLayer::create(
+					errorCString,   
+					"Song search failed, please check your internet connection.", 
+					"Bruh"
+				)->show();
+
 			}
 			else
 			{
