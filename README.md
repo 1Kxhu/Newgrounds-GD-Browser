@@ -20,7 +20,8 @@ Here's another screenshot of the menu, this time I'd searched for songs made by 
 ![image](https://github.com/user-attachments/assets/3614d2d8-9241-4f5a-9188-7f6d28745fd8)
 If there are internet issues, or the request overall fails, this dialog will be shown.
 ![image](https://github.com/user-attachments/assets/be2904e1-5257-490a-9ed2-15b94cd0cc41)
-
+If there are no songs that match your search query, this dialog will be shown.
+![image](https://github.com/user-attachments/assets/ccc78f95-3ec6-45c2-9480-12ba821a5aae)
 
 # Geode-generated (ignore unless you are a developer)
 
