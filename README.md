@@ -2,7 +2,7 @@
 This mod allows you to browse songs from newgrounds in-game, without leaving the game's window.
 
 > [!WARNING]  
-> We do NOT use a WebView, instead, we parse html code and create Cocos controls.
+> We do NOT use a WebView. Instead, we parse html code and create Cocos controls.
 > Any changes done to https://www.newgrounds.com/audio html structure can render this mod useless.
 > In result, this mod's code itself is a little bit messy.
 
@@ -15,13 +15,13 @@ Notice the added button with a web icon to the left of the Newgrounds button.
 ![image](https://github.com/user-attachments/assets/c6ff61c3-3f71-4dc3-ad7f-db5cf64e030a)
 This menu appears upon clickin the web graphic button.
 It allows you to search for newgrounds songs, by title.
-![image](https://github.com/user-attachments/assets/3473ee64-d05e-4cb6-ab99-65d80d8f56c3)
+![image](https://github.com/user-attachments/assets/f639cf6e-658c-4ece-8251-53dc4d4d3c83)
 Here's another screenshot of the menu, this time I'd searched for songs made by the artist 'femtanyl'
-![image](https://github.com/user-attachments/assets/3614d2d8-9241-4f5a-9188-7f6d28745fd8)
+![image](https://github.com/user-attachments/assets/be4009d1-28c9-4184-acd1-3709b24e96d0)
 If there are internet issues, or the request overall fails, this dialog will be shown.
-![image](https://github.com/user-attachments/assets/be2904e1-5257-490a-9ed2-15b94cd0cc41)
+![image](https://github.com/user-attachments/assets/5547723d-52fb-4e8b-bcb7-2d9511d60a1b)
 If there are no songs that match your search query, this dialog will be shown.
-![image](https://github.com/user-attachments/assets/ccc78f95-3ec6-45c2-9480-12ba821a5aae)
+![image](https://github.com/user-attachments/assets/ea73afe8-7db2-4939-9b09-df65c2b4b4d0)
 
 # Geode-generated (ignore unless you are a developer)
 
