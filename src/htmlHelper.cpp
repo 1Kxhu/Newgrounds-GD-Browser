@@ -282,6 +282,15 @@ namespace htmlHelper
 			}
 		}
 
+		if (htmlHelper::numberOfSongsParsed < 1)
+		{
+			FLAlertLayer::create(
+				"0 results.",
+				"Try to simplify your search, or try searching for another song.",
+				"Okay"
+			)->show();
+		}
+
 		//log::info("Obtained {} songs.", obtainedSongs);
 	}
 
@@ -307,12 +316,12 @@ namespace htmlHelper
 			htmlHelper::responseText = response.text;
 			}).detach();
 
-			// sync
+			// 'dont call this manually' pluh
+			CCDirector::get()->drawScene();
+
 			while (htmlHelper::responseText.empty())
 			{
-				// 'dont call this, its called manually' muehehe
-				CCDirector::get()->drawScene();
-				std::this_thread::sleep_for(std::chrono::milliseconds(16)); // temp 60 fps rahh
+				std::this_thread::sleep_for(std::chrono::milliseconds(16));
 			}
 
 			if (htmlHelper::responseText.starts_with("~"))
@@ -325,7 +334,6 @@ namespace htmlHelper
 					"Song search failed, please check your internet connection.", 
 					"Bruh"
 				)->show();
-
 			}
 			else
 			{
