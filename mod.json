@@ -7,10 +7,10 @@
 		"ios": "2.2074"
 	},
 	"id": "7owh.newgrounds_in-game_browser",
-	"name": "Newgrounds Embedded Browser",
+	"name": "Newgrounds GD Browser",
 	"version": "v1.0.0",
 	"developer": "7owh",
-	"description": "",
+	"description": "Browse songs from newgrounds in-game. (In editor)",
 	"resources": {
 		"sprites": [
 			"res/*.png"
