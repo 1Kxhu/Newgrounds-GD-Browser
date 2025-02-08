@@ -332,7 +332,7 @@ namespace htmlHelper
 				FLAlertLayer::create(
 					errorCString,   
 					"Song search failed, please check your internet connection.", 
-					"Bruh"
+					"Okay"
 				)->show();
 			}
 			else
