@@ -2,7 +2,7 @@
 This mod allows you to browse songs from newgrounds in-game, without leaving the game's window.
 
 > [!WARNING]  
-> We do NOT use a WebView, instead, we parse html code and create Cocos controls.
+> We do NOT use a WebView. Instead, we parse html code and create Cocos controls.
 > Any changes done to https://www.newgrounds.com/audio html structure can render this mod useless.
 > In result, this mod's code itself is a little bit messy.
 
