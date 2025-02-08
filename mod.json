@@ -1,0 +1,19 @@
+{
+	"geode": "4.2.0",
+	"gd": {
+		"win": "2.2074",
+		"android": "2.2074",
+		"mac": "2.2074",
+		"ios": "2.2074"
+	},
+	"id": "7owh.newgrounds_in-game_browser",
+	"name": "Newgrounds Embedded Browser",
+	"version": "v1.0.0",
+	"developer": "7owh",
+	"description": "",
+	"resources": {
+		"sprites": [
+			"res/*.png"
+		]
+	}
+}
