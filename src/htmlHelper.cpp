@@ -1,62 +1,29 @@
 // originally wanted to do many things different, i tried 5+ libraries and only got cpr to work
 // there are probably many unnecessary things here
 
-#include <Geode/Geode.hpp>
-using namespace geode::prelude;
-
+#include "htmlHelper.hpp"
 #include <iostream>
-#include <cpr/cpr.h>
+#include <functional>
+#include <sstream>
+#include <cctype>
 
 namespace htmlHelper
 {
-	static CCMenu* newMenu;
-	static size_t numberOfSongsParsed = 0;
-	static CCTextFieldTTF* vanillaSongIDTextField = nullptr;
-	static CCLayerColor* touchBlockLayer = nullptr; // hopefully doesnt crash my game WILL IT HAHAHAHAHAHAHGHSJDRFSGFJDGJDFG
-	static std::string responseText = "";
+	CCMenu* NGTouchMenu;
+	size_t numberOfSongsParsed = 0;
+	CCTextFieldTTF* vanillaSongIDTextField = nullptr;
+	CCLayerColor* NGTouchLayer = nullptr;
+	std::string m_responseTextHTML = "";
+	EventListener<geode::utils::web::WebTask> m_webRequestTaskListener;
+	CCLabelBMFont* searchingLabel = nullptr;
 
-	#include <functional>
-
-	class MyMenuItemSprite : public CCMenuItemSpriteExtra {
-	public:
-		using Callback = std::function<void(CCObject*)>;
-
-		static MyMenuItemSprite* create(cocos2d::CCNode* normalSprite, cocos2d::CCNode* target, Callback callback) {
-			MyMenuItemSprite* pRet = new MyMenuItemSprite();
-			if (pRet && pRet->init(normalSprite, target, callback)) {
-				pRet->autorelease();
-				return pRet;
-			}
-			else {
-				delete pRet;
-				return nullptr;
-			}
-		}
-
-		bool init(cocos2d::CCNode* normalSprite, cocos2d::CCNode* target, Callback callback) {
-			if (!CCMenuItemSpriteExtra::init(normalSprite, normalSprite, target, menu_selector(MyMenuItemSprite::onClick))) {
-				return false;
-			}
-			return true;
-		}
-
-		// subclass just for this lol
-		void onClick(CCObject* sender) {
-			if (auto btn = dynamic_cast<MyMenuItemSprite*>(sender))
-			{
-				htmlHelper::vanillaSongIDTextField->setString(btn->getID().c_str());
-				htmlHelper::touchBlockLayer->removeMeAndCleanup();
-			}
-		}
-	};
-
-	static gd::string ResolveLink(gd::string baseURL, gd::string searchQuery)
+	gd::string ResolveLink(gd::string baseURL, gd::string searchQuery)
 	{
 		std::replace(searchQuery.begin(), searchQuery.end(), ' ', '+');
 		return baseURL + searchQuery;
 	}
 
-	static std::string SearchFor(const std::string& content, const std::string& startString, const std::string& endString)
+	std::string SearchFor(const std::string& content, const std::string& startString, const std::string& endString)
 	{
 		size_t startPos = content.find(startString);
 		if (startPos == std::string::npos) {
@@ -74,11 +41,7 @@ namespace htmlHelper
 		return content.substr(startPos, endPos - startPos);
 	}
 
-	#include <string>
-	#include <sstream>
-	#include <cctype>
-
-	static std::string htmlStringToStandardString(std::string inputHtmlString) {
+	std::string htmlStringToStandardString(std::string inputHtmlString) {
 		std::string outputString;
 		size_t i = 0;
 		while (i < inputHtmlString.size()) {
@@ -86,7 +49,7 @@ namespace htmlHelper
 				size_t semicolon_pos = inputHtmlString.find(';', i);
 				if (semicolon_pos != std::string::npos && semicolon_pos > i) {
 					std::string entity = inputHtmlString.substr(i + 1, semicolon_pos - i - 1);
-					if (entity[0] == '#') { 
+					if (entity[0] == '#') {
 						try {
 							int code = std::stoi(entity.substr(1)); // Handle &#xxx;
 							outputString += static_cast<char>(code);
@@ -114,7 +77,7 @@ namespace htmlHelper
 							outputString += '\'';
 						}
 						else {
-							// yeah ur on ur own buddy
+							// not recognized, treats as actual text
 							outputString += '&';
 							outputString += entity;
 							outputString += ';';
@@ -136,14 +99,25 @@ namespace htmlHelper
 		return outputString;
 	}
 
-	static bool startsWithNumber(const std::string& inputString) {
+	bool startsWithNumber(const std::string& inputString) {
 		return !inputString.empty() && std::isdigit(static_cast<unsigned char>(inputString[0]));
 	}
 
-	#include <stdlib.h>
-	static void ParseLiElementIntoSong(std::string liElement)
+	class HTMLHelper {
+	public:
+		void onSelectSongClick(CCObject* sender) {
+			if (auto btn = dynamic_cast<CCMenuItemSpriteExtra*>(sender)) {
+				htmlHelper::vanillaSongIDTextField->setString(btn->getID().c_str());
+				htmlHelper::NGTouchLayer->removeMeAndCleanup();
+				htmlHelper::NGTouchLayer = nullptr;
+			}
+		}
+
+
+	};
+
+	void ParseLiElementIntoSong(std::string liElement)
 	{
-		//log::warn("     {}", liElement);
 		std::string songID = SearchFor(liElement, "<a href=\"https://www.newgrounds.com/audio/listen/", "\"");
 		if (songID == "")
 		{
@@ -152,25 +126,17 @@ namespace htmlHelper
 
 		std::string artist = SearchFor(liElement, "<strong>", "</strong>");
 		std::string title = SearchFor(liElement, "title=\"", "\">");
-
 		artist = htmlStringToStandardString(artist);
 		title = htmlStringToStandardString(title);
 
 		std::string views = SearchFor(liElement, "<dd>", " Views</dd>");
-		while (true)
+		while (views.starts_with("<") || !startsWithNumber(views))
 		{
-			if (views.starts_with("<") || !startsWithNumber(views))
-			{
-				views = views + " Views</dd>";
-				views = SearchFor(views, "<dd>", " Views</dd>");
-				continue;
-			}
-
-			break;
+			views = views + " Views</dd>";
+			views = SearchFor(views, "<dd>", " Views</dd>");
 		}
 
 		std::string durationInSeconds_str = SearchFor(liElement, "audio-duration=\"", "\"");
-		//log::info("Precalc time: {}", durationInSeconds_str);
 
 		size_t durationInSeconds = std::strtoul(durationInSeconds_str.c_str(), nullptr, 10);
 		size_t minutes = durationInSeconds / 60;
@@ -180,10 +146,10 @@ namespace htmlHelper
 		std::snprintf(time, sizeof(time), "%zu:%02zu", minutes, seconds);
 		std::string result(time);
 
-		// By ARTISTNAME, Length: XX:XX, Views: 1.9B 
-		// ARTISTNAME, XX:XX, 1.9B Views
+		// formattedInfo can look like this for example: 
+		// "ARTISTNAME, XX:XX, 1.9B Views"
 		std::string formattedInfo = artist + ", " + time + ", " + views + " Views";
-		//log::info(formattedInfo);
+
 		CCLabelBMFont* songIDLabel = CCLabelBMFont::create(title.c_str(), "bigFont.fnt");
 		songIDLabel->setAnchorPoint(CCPointMake(0.0f, 0.3f));
 		songIDLabel->setScale(0.5f);
@@ -197,14 +163,14 @@ namespace htmlHelper
 		additionalDataLabel->setPositionY(197.0f - (htmlHelper::numberOfSongsParsed * 32.5f));
 		additionalDataLabel->setOpacity(192);
 
-		htmlHelper::newMenu->addChild(songIDLabel);
-		htmlHelper::newMenu->addChild(additionalDataLabel);
+		htmlHelper::NGTouchMenu->addChild(songIDLabel);
+		htmlHelper::NGTouchMenu->addChild(additionalDataLabel);
 
 		auto spr = CCSprite::create("select.png"_spr);
-		auto myButton = MyMenuItemSprite::create(
+		auto myButton = CCMenuItemSpriteExtra::create(
 			spr,
-			htmlHelper::newMenu->m_pParent,
-			nullptr
+			htmlHelper::NGTouchMenu->m_pParent,
+			menu_selector(HTMLHelper::onSelectSongClick)
 		);
 
 		myButton->setScale(1);
@@ -214,21 +180,18 @@ namespace htmlHelper
 
 		songIDLabel->setPositionX(songIDLabel->getPositionX() + myButton->getContentWidth());
 
-		myButton->setTag(69);
-		songIDLabel->setTag(69);
-		additionalDataLabel->setTag(69);
-
-		htmlHelper::newMenu->addChild(myButton);
-		htmlHelper::newMenu->addChild(songIDLabel);
+		htmlHelper::NGTouchMenu->addChild(myButton);
+		htmlHelper::NGTouchMenu->addChild(songIDLabel);
 
 		htmlHelper::numberOfSongsParsed++;
 	}
 
-	static void ParseHTML(std::string htmlResponse)
+	void ParseHTML(std::string htmlResponse)
 	{
 		std::string ulContent = "";
 
 		// FIND UL TAG (THE ONE THAT CONTAINS ALL THE SONGS DIV WRAPPERS)
+		// all of it's children are expected to be <li>
 		size_t startPos = htmlResponse.find("<ul class=\"itemlist spaced\">");
 		if (startPos != std::string::npos)
 		{
@@ -248,8 +211,8 @@ namespace htmlHelper
 			//log::error("<ul> Tag not found!");
 		}
 
+		// reset global counter
 		htmlHelper::numberOfSongsParsed = 0;
-		size_t obtainedSongs = 0;
 
 		// SORT THROUGH EACH LI ELEMENT
 		while (true && htmlHelper::numberOfSongsParsed < 5)
@@ -263,6 +226,8 @@ namespace htmlHelper
 				{
 					std::string liContent = htmlResponse.substr(startPos, endPos - startPos);
 					htmlResponse = htmlResponse.substr(endPos + 5);
+
+					// filter out unrelated <li> elements
 					if (liContent.starts_with("<a href=\"https://"))
 					{
 						continue;
@@ -270,7 +235,6 @@ namespace htmlHelper
 
 					//log::info("   Found <li>:");
 					htmlHelper::ParseLiElementIntoSong(liContent);
-					obtainedSongs++;
 				}
 				else {
 					break;
@@ -294,50 +258,41 @@ namespace htmlHelper
 		//log::info("Obtained {} songs.", obtainedSongs);
 	}
 
-	#include <thread>
+	geode::utils::web::WebTask currentWebTask;
 
-	// dont let anyone see this code
-	static void ProcessSearchURL(gd::string constructedSearchURL)
+	void ProcessSearchURL(gd::string constructedSearchURL)
 	{
-		htmlHelper::responseText = "";
+		htmlHelper::m_responseTextHTML = "";
 
-		// async get
-		std::thread([constructedSearchURL]() {
-			cpr::Response response = cpr::Get(cpr::Url{ constructedSearchURL });
-
-			if (response.status_code != 200) {
-				log::error("Request failed with status: {}", response.status_code);
-				htmlHelper::responseText = "~" + response.status_code;
-				return;
-			}
-
-			//log::info("STATUS_CODE: {}", response.status_code);
-
-			htmlHelper::responseText = response.text;
-			}).detach();
-
-			// 'dont call this manually' pluh
-			CCDirector::get()->drawScene();
-
-			while (htmlHelper::responseText.empty())
+		htmlHelper::m_webRequestTaskListener.bind([](web::WebTask::Event* event) {
+			if (geode::utils::web::WebResponse* response = event->getValue())
 			{
-				std::this_thread::sleep_for(std::chrono::milliseconds(16));
-			}
+				htmlHelper::searchingLabel->setVisible(false);
+				htmlHelper::m_responseTextHTML = response->string().unwrap().c_str();
 
-			if (htmlHelper::responseText.starts_with("~"))
-			{
-				std::string errorString = "Error " + htmlHelper::responseText.substr(1);
-				const char* errorCString = errorString.c_str();
+				if (htmlHelper::m_responseTextHTML.starts_with("~"))
+				{
+					std::string errorString = "Error " + htmlHelper::m_responseTextHTML.substr(1);
+					const char* errorCString = errorString.c_str();
 
-				FLAlertLayer::create(
-					errorCString,   
-					"Song search failed, please check your internet connection.", 
-					"Okay"
-				)->show();
+					FLAlertLayer::create(
+						errorCString,
+						"Song search failed, try checking your internet connection.",
+						"Okay"
+					)->show();
+				}
+				else
+				{
+					htmlHelper::ParseHTML(htmlHelper::m_responseTextHTML);
+				}
 			}
-			else
-			{
-				htmlHelper::ParseHTML(htmlHelper::responseText);
-			}
+		});
+
+		web::WebRequest req = web::WebRequest();
+		std::string url = constructedSearchURL;
+		currentWebTask = req.get(url);
+
+		htmlHelper::searchingLabel->setVisible(true);
+		m_webRequestTaskListener.setFilter(currentWebTask);
 	}
 }

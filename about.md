@@ -7,3 +7,5 @@ Any changes done to https://www.newgrounds.com/audio html structure can render t
 In result, this mod's code itself is a little bit messy.
 
 ps. Basically, if the Newgrounds search results page's layout changes, this code will not work.
+
+Big thanks to SMJS for pointing out many issues with my code
